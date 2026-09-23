@@ -5,6 +5,9 @@ import { User } from "./users/user";
 import { Validator } from "./validator";
 import { UserService } from "./users/user.service";
 import { UserRepository } from "./users/user.repository";
+import { ProjectController } from "./projects/project.controller";
+import { ProjectService } from "./projects/project.service";
+import { ProjectRepository } from "./projects/project.repository";
 const app = express();
 const PORT = process.env.PORT || 5005;
 
@@ -13,6 +16,9 @@ app.use(express.json());
 //Check the content type of the post request
 
 let userController = new UserController(new UserService(new UserRepository()));
+let projectController = new ProjectController(
+  new ProjectService(new ProjectRepository()),
+);
 app.use((req, res, next) => {
   if (
     req.method == "POST" &&
@@ -45,6 +51,9 @@ app.get("/api/users", userController.getUsers);
 app.get("/api/users/:id", userController.getUser);
 
 app.post("/api/users", userController.createUser);
+app.post("/api/projects", projectController.createProject);
+app.get("/api/projects", projectController.getProjects);
+app.get("/api/projects/:id", projectController.getProject);
 
 //Server Serving lol
 app.listen(PORT, () => {
