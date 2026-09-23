@@ -1,6 +1,6 @@
 import { User } from "./user";
 import { UserRepository } from "./user.repository";
-import { Validator } from "./validator";
+import { Validator } from "../validator";
 
 export class UserService {
   constructor(private userRepository: UserRepository) {

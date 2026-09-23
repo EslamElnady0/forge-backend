@@ -1,10 +1,10 @@
-import { UserController } from "./user.controller";
+import { UserController } from "./users/user.controller";
 import "dotenv/config";
 import express, { NextFunction } from "express";
-import { User } from "./user";
+import { User } from "./users/user";
 import { Validator } from "./validator";
-import { UserService } from "./user.service";
-import { UserRepository } from "./user.repository";
+import { UserService } from "./users/user.service";
+import { UserRepository } from "./users/user.repository";
 const app = express();
 const PORT = process.env.PORT || 5005;
 

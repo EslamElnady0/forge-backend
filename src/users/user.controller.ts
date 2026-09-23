@@ -1,7 +1,7 @@
-import { User } from "./user";
-import { UserService } from "./user.service";
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
+import { UserService } from "./user.service";
+import { User } from "./user";
 
 const CreateUserSchema = z.object({
   name: z.string().min(1, "name is required"),
