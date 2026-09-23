@@ -1,0 +1,38 @@
+import { Task, TaskStatus } from "./task";
+import { TaskRepository } from "./task.repository";
+
+export class TaskService {
+  constructor(private taskRepository: TaskRepository) {
+    this.taskRepository = taskRepository;
+  }
+
+  createTask(
+    title: string,
+    status: TaskStatus,
+    projectId: number,
+    assigneeId: number,
+  ): Task {
+    const t: Task = new Task(title, status, projectId, assigneeId);
+    return this.taskRepository.save(t);
+  }
+
+  getTask(id: number): Task {
+    const found = this.taskRepository.findById(id);
+    if (found == null) {
+      throw new Error("Task not found");
+    }
+    return found;
+  }
+
+  getTasks(): Task[] {
+    return this.taskRepository.fetchTasks();
+  }
+
+  getTasksByProject(projectId: number): Task[] {
+    return this.taskRepository.findByProjectId(projectId);
+  }
+
+  getTasksByAssignee(assigneeId: number): Task[] {
+    return this.taskRepository.findByAssigneeId(assigneeId);
+  }
+}

@@ -8,6 +8,9 @@ import { UserRepository } from "./users/user.repository";
 import { ProjectController } from "./projects/project.controller";
 import { ProjectService } from "./projects/project.service";
 import { ProjectRepository } from "./projects/project.repository";
+import { TaskController } from "./tasks/task.controller";
+import { TaskService } from "./tasks/task.service";
+import { TaskRepository } from "./tasks/task.repository";
 const app = express();
 const PORT = process.env.PORT || 5005;
 
@@ -19,6 +22,7 @@ let userController = new UserController(new UserService(new UserRepository()));
 let projectController = new ProjectController(
   new ProjectService(new ProjectRepository()),
 );
+let taskController = new TaskController(new TaskService(new TaskRepository()));
 app.use((req, res, next) => {
   if (
     req.method == "POST" &&
@@ -54,6 +58,11 @@ app.post("/api/users", userController.createUser);
 app.post("/api/projects", projectController.createProject);
 app.get("/api/projects", projectController.getProjects);
 app.get("/api/projects/:id", projectController.getProject);
+app.post("/api/tasks", taskController.createTask);
+app.get("/api/tasks", taskController.getTasks);
+app.get("/api/tasks/:id", taskController.getTask);
+app.get("/api/projects/:projectId/tasks", taskController.getTasksByProject);
+app.get("/api/users/:assigneeId/tasks", taskController.getTasksByAssignee);
 
 //Server Serving lol
 app.listen(PORT, () => {
