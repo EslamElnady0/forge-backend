@@ -44,6 +44,29 @@ app.get("/api/users", (req, res, next) => {
   });
 });
 
+app.get("/api/users/:id", (req, res, next) => {
+  const rawId = req.params.id;
+
+  // Use a Regular Expression to check if the string is strictly digits
+  if (!/^\d+$/.test(rawId)) {
+    return res.status(400).json({ error: "ID must be a valid number" });
+  }
+
+  let id = parseInt(req.params.id, 10);
+  const user: User | undefined = users.find((user) => {
+    return id === user.id;
+  });
+  if (user) {
+    return res.status(200).json({
+      user,
+    });
+  } else {
+    return res.status(404).json({
+      message: "Not Found",
+    });
+  }
+});
+
 app.post("/api/users", (req, res, next) => {
   const name = req.body.name as string | undefined;
   const email = req.body.email as string | undefined;
