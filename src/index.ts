@@ -12,6 +12,7 @@ import { TaskController } from "./tasks/task.controller";
 import { TaskService } from "./tasks/task.service";
 import { TaskRepository } from "./tasks/task.repository";
 import { AppError } from "./utils/appError";
+import { globalErrorHandler } from "./utils/errorHandler";
 const app = express();
 const PORT = process.env.PORT || 5005;
 
@@ -66,32 +67,7 @@ app.get("/api/projects/:projectId/tasks", taskController.getTasksByProject);
 app.get("/api/users/:assigneeId/tasks", taskController.getTasksByAssignee);
 
 //Global Error Handler
-app.use(
-  (
-    err: Error,
-    req: express.Request,
-    res: express.Response,
-    next: express.NextFunction,
-  ) => {
-    console.error(`[ERROR] ${err.message}`);
-
-    if (err instanceof AppError) {
-      return res.status(err.statusCode).json({
-        success: false,
-        error: {
-          message: err.message,
-        },
-      });
-    }
-
-    return res.status(500).json({
-      success: false,
-      error: {
-        message: "Internal Server Error",
-      },
-    });
-  },
-);
+app.use(globalErrorHandler);
 
 //Server Serving lol
 app.listen(PORT, () => {
