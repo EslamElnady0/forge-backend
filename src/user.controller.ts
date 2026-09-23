@@ -1,79 +1,63 @@
-import { Message } from "./../node_modules/esbuild/lib/main.d";
 import { User } from "./user";
 import { UserService } from "./user.service";
 import { Request, Response, NextFunction } from "express";
-import { Validator } from "./validator";
+import { z } from "zod";
+
+const CreateUserSchema = z.object({
+  name: z.string().min(1, "name is required"),
+  email: z.email("email must be valid"),
+});
+
+const UserIdSchema = z.coerce.number().int().nonnegative();
 
 export class UserController {
-  constructor(private userService: UserService) {
-    this.userService = userService;
-  }
+  constructor(private userService: UserService) {}
 
-  getUser = (req: Request, res: Response, next: NextFunction): unknown => {
-    try {
-      const rawId = req.params.id as string;
+  getUser = (req: Request, res: Response, next: NextFunction) => {
+    const validationRes = UserIdSchema.safeParse(req.params.id);
 
-      if (!/^\d+$/.test(rawId)) {
-        return res.status(400).json({ error: "ID must be a valid number" });
-      }
-
-      let id = parseInt(rawId, 10);
-
-      const user: User = this.userService.getUser(id);
-
-      return res.status(200).json({
-        user,
-      });
-    } catch (error) {
-      const castedError = error as Error;
-
-      return res.status(404).json({
-        message: castedError.message,
-      });
+    if (!validationRes.success) {
+      return res.status(400).json(z.treeifyError(validationRes.error));
     }
-  };
-  createUser = (req: Request, res: Response, next: NextFunction): unknown => {
+
     try {
-      const name = req.body.name as string;
-      const email = req.body.email as string;
-
-      const errors = Validator.validate((v) => {
-        v.for("name", name).required();
-        v.for("email", email).required().isEmail();
-      });
-
-      if (errors.length > 0) {
-        return res.status(400).json({ errors });
-      }
-
-      const user = this.userService.createUser(name, email);
-
-      return res.status(201).json({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      });
+      const user: User = this.userService.getUser(validationRes.data);
+      return res.status(200).json({ user });
     } catch (error) {
-      const castedError = error as Error;
-
-      return res.status(404).json({
-        message: castedError.message,
-      });
+      return res.status(404).json({ error: "User not found" });
+      // commented until making the global error handler
+      //next(error);
     }
   };
 
-  getUsers = (req: Request, res: Response, next: NextFunction): unknown => {
+  createUser = (req: Request, res: Response, next: NextFunction) => {
+    const result = CreateUserSchema.safeParse(req.body);
+
+    if (!result.success) {
+      return res
+        .status(400)
+        .json({ properties: z.treeifyError(result.error).properties });
+    }
+
+    try {
+      const user = this.userService.createUser(
+        result.data.name,
+        result.data.email,
+      );
+      return res
+        .status(201)
+        .json({ id: user.id, name: user.name, email: user.email });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getUsers = (req: Request, res: Response, next: NextFunction) => {
     try {
       const users = this.userService.getUsers();
-      return res.status(200).json({
-        users,
-      });
+      return res.status(200).json({ users });
     } catch (error) {
-      const castedError = error as Error;
-
-      return res.status(404).json({
-        message: castedError.message,
-      });
+      next(error);
     }
   };
 }
