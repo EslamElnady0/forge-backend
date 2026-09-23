@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { UserService } from "./user.service";
 import { User } from "./user";
+import { AppError } from "../utils/appError";
 
 const CreateUserSchema = z.object({
   name: z.string().min(1, "name is required"),
@@ -17,15 +18,14 @@ export class UserController {
     const validationRes = UserIdSchema.safeParse(req.params.id);
 
     if (!validationRes.success) {
-      return res.status(400).json(z.treeifyError(validationRes.error));
-    }
+      const validationDetails = z.treeifyError(validationRes.error);
 
+      return next(new AppError("Validation failed", 400, validationDetails));
+    }
     try {
       const user: User = this.userService.getUser(validationRes.data);
       return res.status(200).json({ user });
     } catch (error) {
-      //return res.status(404).json({ error: "User not found" });
-      // commented until making the global error handler
       next(error);
     }
   };

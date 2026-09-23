@@ -14,6 +14,7 @@ export function globalErrorHandler(
       success: false,
       error: {
         message: err.message,
+        details: err.details,
       },
     });
   }

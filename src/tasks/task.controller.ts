@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { TaskService } from "./task.service";
 import { TaskStatus } from "./task";
+import { AppError } from "../utils/appError";
 
 const CreateTaskSchema = z.object({
   title: z.string().min(1, "title is required"),
@@ -19,9 +20,8 @@ export class TaskController {
     const result = CreateTaskSchema.safeParse(req.body);
 
     if (!result.success) {
-      return res
-        .status(400)
-        .json({ properties: z.treeifyError(result.error).properties });
+      const validationDetails = z.treeifyError(result.error).properties;
+      return next(new AppError("Validation failed", 400, validationDetails));
     }
 
     try {

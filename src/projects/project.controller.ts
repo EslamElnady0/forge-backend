@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
 import { ProjectService } from "./project.service";
+import { AppError } from "../utils/appError";
 
 const CreateProjectSchema = z.object({
   title: z.string().min(1, "title is required"),
@@ -43,9 +44,10 @@ export class ProjectController {
     const validationRes = ProjectIdSchema.safeParse(req.params.id);
 
     if (!validationRes.success) {
-      return res.status(400).json(z.treeifyError(validationRes.error));
-    }
+      const validationDetails = z.treeifyError(validationRes.error);
 
+      return next(new AppError("Validation failed", 400, validationDetails));
+    }
     try {
       const project = this.projectService.getProject(validationRes.data);
       return res.status(200).json({ project });
