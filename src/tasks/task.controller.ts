@@ -47,7 +47,8 @@ export class TaskController {
     const validationRes = IdSchema.safeParse(req.params.id);
 
     if (!validationRes.success) {
-      return res.status(400).json(z.treeifyError(validationRes.error));
+      const validationDetails = z.treeifyError(validationRes.error);
+      return next(new AppError("Validation failed", 400, validationDetails));
     }
 
     try {
@@ -68,10 +69,11 @@ export class TaskController {
   };
 
   getTasksByProject = (req: Request, res: Response, next: NextFunction) => {
-    const validationRes = IdSchema.safeParse(req.params.id);
+    const validationRes = IdSchema.safeParse(req.params.projectId);
 
     if (!validationRes.success) {
-      return res.status(400).json(z.treeifyError(validationRes.error));
+      const validationDetails = z.treeifyError(validationRes.error);
+      return next(new AppError("Validation failed", 400, validationDetails));
     }
 
     try {
@@ -84,10 +86,11 @@ export class TaskController {
   };
 
   getTasksByAssignee = (req: Request, res: Response, next: NextFunction) => {
-    const validationRes = IdSchema.safeParse(req.params.id);
+    const validationRes = IdSchema.safeParse(req.params.assigneeId);
 
     if (!validationRes.success) {
-      return res.status(400).json(z.treeifyError(validationRes.error));
+      const validationDetails = z.treeifyError(validationRes.error);
+      return next(new AppError("Validation failed", 400, validationDetails));
     }
 
     try {

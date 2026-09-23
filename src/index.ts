@@ -53,9 +53,7 @@ app.get("/api/health", (req, res, next) => {
 });
 
 app.get("/api/users", userController.getUsers);
-
 app.get("/api/users/:id", userController.getUser);
-
 app.post("/api/users", userController.createUser);
 app.post("/api/projects", projectController.createProject);
 app.get("/api/projects", projectController.getProjects);

@@ -34,9 +34,8 @@ export class UserController {
     const result = CreateUserSchema.safeParse(req.body);
 
     if (!result.success) {
-      return res
-        .status(400)
-        .json({ properties: z.treeifyError(result.error).properties });
+      const validationDetails = z.treeifyError(result.error).properties;
+      return next(new AppError("Validation failed", 400, validationDetails));
     }
 
     try {
