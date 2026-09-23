@@ -1,3 +1,4 @@
+import { AppError } from "../utils/appError";
 import { Project } from "./project";
 import { ProjectRepository } from "./project.repository";
 
@@ -14,7 +15,7 @@ export class ProjectService {
   getProject(id: number): Project {
     const found = this.projectRepository.findById(id);
     if (found == null) {
-      throw new Error("Project not found");
+      throw new AppError("Project not found", 404);
     }
     return found;
   }

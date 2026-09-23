@@ -24,9 +24,9 @@ export class UserController {
       const user: User = this.userService.getUser(validationRes.data);
       return res.status(200).json({ user });
     } catch (error) {
-      return res.status(404).json({ error: "User not found" });
+      //return res.status(404).json({ error: "User not found" });
       // commented until making the global error handler
-      //next(error);
+      next(error);
     }
   };
 

@@ -1,6 +1,7 @@
 import { User } from "./user";
 import { UserRepository } from "./user.repository";
 import { Validator } from "../validator";
+import { AppError } from "../utils/appError";
 
 export class UserService {
   constructor(private userRepository: UserRepository) {
@@ -15,7 +16,7 @@ export class UserService {
     const foundUser = this.userRepository.findById(id);
 
     if (foundUser == null) {
-      throw new Error("User not found");
+      throw new AppError("User not found", 404);
     }
 
     return foundUser;

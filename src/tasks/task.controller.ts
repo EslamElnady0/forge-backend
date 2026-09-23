@@ -54,7 +54,7 @@ export class TaskController {
       const task = this.taskService.getTask(validationRes.data);
       return res.status(200).json({ task });
     } catch (error) {
-      return res.status(404).json({ error: "Task not found" });
+      next(error);
     }
   };
 

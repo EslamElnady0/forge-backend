@@ -50,7 +50,7 @@ export class ProjectController {
       const project = this.projectService.getProject(validationRes.data);
       return res.status(200).json({ project });
     } catch (error) {
-      return res.status(404).json({ error: "Project not found" });
+      next(error);
     }
   };
 

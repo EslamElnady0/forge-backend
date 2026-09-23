@@ -1,3 +1,4 @@
+import { AppError } from "../utils/appError";
 import { Task, TaskStatus } from "./task";
 import { TaskRepository } from "./task.repository";
 
@@ -19,7 +20,7 @@ export class TaskService {
   getTask(id: number): Task {
     const found = this.taskRepository.findById(id);
     if (found == null) {
-      throw new Error("Task not found");
+      throw new AppError("Task not found", 404);
     }
     return found;
   }
