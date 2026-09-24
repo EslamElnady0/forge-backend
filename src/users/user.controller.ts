@@ -14,7 +14,7 @@ const UserIdSchema = z.coerce.number().int().nonnegative();
 export class UserController {
   constructor(private userService: UserService) {}
 
-  getUser = (req: Request, res: Response, next: NextFunction) => {
+  getUser = async (req: Request, res: Response, next: NextFunction) => {
     const validationRes = UserIdSchema.safeParse(req.params.id);
 
     if (!validationRes.success) {
@@ -23,14 +23,14 @@ export class UserController {
       return next(new AppError("Validation failed", 400, validationDetails));
     }
     try {
-      const user: User = this.userService.getUser(validationRes.data);
+      const user: User = await this.userService.getUser(validationRes.data);
       return res.status(200).json({ user });
     } catch (error) {
       next(error);
     }
   };
 
-  createUser = (req: Request, res: Response, next: NextFunction) => {
+  createUser = async (req: Request, res: Response, next: NextFunction) => {
     const result = CreateUserSchema.safeParse(req.body);
 
     if (!result.success) {
@@ -39,7 +39,7 @@ export class UserController {
     }
 
     try {
-      const user = this.userService.createUser(
+      const user = await this.userService.createUser(
         result.data.name,
         result.data.email,
       );
@@ -51,9 +51,9 @@ export class UserController {
     }
   };
 
-  getUsers = (req: Request, res: Response, next: NextFunction) => {
+  getUsers = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const users = this.userService.getUsers();
+      const users = await this.userService.getUsers();
       return res.status(200).json({ users });
     } catch (error) {
       next(error);
