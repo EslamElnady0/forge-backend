@@ -10,10 +10,13 @@ import {
 export class TaskController {
   constructor(private taskService: TaskService) {}
 
-  createTask = async (req: Request, res: Response, next: NextFunction) => {
+  createTask = async (
+    req: Request<any, CreateTaskInput["body"], any>,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
-      const { title, status, projectId, assigneeId } =
-        req.body as CreateTaskInput["body"];
+      const { title, status, projectId, assigneeId } = req.body;
 
       const task = await this.taskService.createTask(
         title,
@@ -59,13 +62,12 @@ export class TaskController {
   };
 
   getTasksByProject = async (
-    req: Request,
+    req: Request<any, any, ProjectIdParamInput["params"]>,
     res: Response,
     next: NextFunction,
   ) => {
     try {
-      const { projectId } =
-        req.params as unknown as ProjectIdParamInput["params"];
+      const { projectId } = req.params;
 
       const tasks = await this.taskService.getTasksByProject(projectId);
       return res.status(200).json({ tasks });
@@ -75,13 +77,12 @@ export class TaskController {
   };
 
   getTasksByAssignee = async (
-    req: Request,
+    req: Request<any, any, AssigneeIdParamInput["params"]>,
     res: Response,
     next: NextFunction,
   ) => {
     try {
-      const { assigneeId } =
-        req.params as unknown as AssigneeIdParamInput["params"];
+      const { assigneeId } = req.params;
 
       const tasks = await this.taskService.getTasksByAssignee(assigneeId);
       return res.status(200).json({ tasks });
