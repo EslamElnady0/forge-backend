@@ -19,6 +19,6 @@ export class CreateTaskRequest {
     public title: string,
     public status: TaskStatus,
     public projectId: number,
-    public assigneeId: number | undefined,
+    public assigneeId: number | null | undefined,
   ) {}
 }

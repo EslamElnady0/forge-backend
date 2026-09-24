@@ -52,6 +52,20 @@ export class ProjectRepository {
     );
   }
 
+  async isUserMemberOrOwner(
+    projectId: number,
+    userId: number,
+  ): Promise<boolean> {
+    const count = await prisma.project.count({
+      where: {
+        id: projectId,
+        OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
+      },
+    });
+
+    return count > 0;
+  }
+
   private execute<T>(action: () => Promise<T>): Promise<T> {
     return runDb(action, (error: Prisma.PrismaClientKnownRequestError) => {
       switch (error.code) {

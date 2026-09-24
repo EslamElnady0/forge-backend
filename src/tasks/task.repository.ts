@@ -1,3 +1,4 @@
+import { join } from "./../generated/prisma/internal/prismaNamespace";
 import { Prisma } from "../generated/prisma/client";
 import { TaskModel } from "../generated/prisma/models";
 import { AppError } from "../utils/appError";
@@ -61,10 +62,10 @@ export class TaskRepository {
   private execute<T>(action: () => Promise<T>): Promise<T> {
     return runDb(action, (error: Prisma.PrismaClientKnownRequestError) => {
       switch (error.code) {
-        case "P2003":
-          throw new AppError("Project or assignee not found.", 404);
         case "P2025":
           throw new AppError("Task not found.", 404);
+        case "P2003":
+          throw new AppError("Referenced relation does not exist.", 400);
       }
     });
   }

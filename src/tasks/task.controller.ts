@@ -8,7 +8,7 @@ const CreateTaskSchema = z.object({
   title: z.string().min(1, "title is required"),
   status: z.enum(TaskStatus),
   projectId: z.coerce.number().int().nonnegative(),
-  assigneeId: z.coerce.number().int().nonnegative().optional(),
+  assigneeId: z.coerce.number().int().nonnegative().nullable().optional(),
 });
 
 const IdSchema = z.coerce.number().int().nonnegative();

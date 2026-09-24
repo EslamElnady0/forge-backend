@@ -1,8 +1,6 @@
 import { UserController } from "./users/user.controller";
 import "dotenv/config";
-import express, { NextFunction } from "express";
-import { User } from "./users/user";
-import { Validator } from "./validator";
+import express from "express";
 import { UserService } from "./users/user.service";
 import { UserRepository } from "./users/user.repository";
 import { ProjectController } from "./projects/project.controller";
@@ -18,13 +16,20 @@ const PORT = process.env.PORT || 5005;
 
 app.use(express.json());
 
-//Check the content type of the post request
+let projectRepo = new ProjectRepository();
+let userRepo = new UserRepository();
+let taskRepo = new TaskRepository();
+//======================================
+let userService = new UserService(userRepo);
+let projectService = new ProjectService(projectRepo, userRepo);
+let taskService = new TaskService(taskRepo, projectRepo, userRepo);
+//=======================================
+let userController = new UserController(userService);
+let projectController = new ProjectController(projectService);
+let taskController = new TaskController(taskService);
+//=======================================
 
-let userController = new UserController(new UserService(new UserRepository()));
-let projectController = new ProjectController(
-  new ProjectService(new ProjectRepository()),
-);
-let taskController = new TaskController(new TaskService(new TaskRepository()));
+//Check the content type of the post request
 app.use((req, res, next) => {
   if (
     req.method == "POST" &&
