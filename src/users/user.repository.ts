@@ -1,31 +1,19 @@
 import { Prisma } from "../generated/prisma/client";
 import { UserModel } from "../generated/prisma/models";
 import { AppError } from "../utils/appError";
-import { prisma } from "../utils/prisma";
+import { prisma, runDb } from "../utils/prisma";
 import { CreateUserRequest, User } from "./user";
 
 export class UserRepository {
-  private async execute<T>(action: () => Promise<T>): Promise<T> {
-    try {
-      return await action();
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientInitializationError) {
-        throw new AppError("Database service is currently unreachable.", 503);
+  private execute<T>(action: () => Promise<T>): Promise<T> {
+    return runDb(action, (error: Prisma.PrismaClientKnownRequestError) => {
+      switch (error.code) {
+        case "P2002":
+          throw new AppError("This email is already in use.", 409);
+        case "P2025":
+          throw new AppError("User not found.", 404);
       }
-
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        switch (error.code) {
-          case "P2002": {
-            throw new AppError(`This email is already in use.`, 409);
-          }
-          case "P2025": {
-            throw new AppError(`User not found.`, 404);
-          }
-        }
-      }
-
-      throw error;
-    }
+    });
   }
 
   async save(userReq: CreateUserRequest): Promise<User> {
