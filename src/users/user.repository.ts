@@ -5,17 +5,6 @@ import { prisma, runDb } from "../utils/prisma";
 import { CreateUserRequest, User } from "./user";
 
 export class UserRepository {
-  private execute<T>(action: () => Promise<T>): Promise<T> {
-    return runDb(action, (error: Prisma.PrismaClientKnownRequestError) => {
-      switch (error.code) {
-        case "P2002":
-          throw new AppError("This email is already in use.", 409);
-        case "P2025":
-          throw new AppError("User not found.", 404);
-      }
-    });
-  }
-
   async save(userReq: CreateUserRequest): Promise<User> {
     const result = await this.execute(() =>
       prisma.user.create({
@@ -42,5 +31,16 @@ export class UserRepository {
       prisma.user.findMany(),
     );
     return rawUsers.map((user) => new User(user.id, user.name, user.email));
+  }
+
+  private execute<T>(action: () => Promise<T>): Promise<T> {
+    return runDb(action, (error: Prisma.PrismaClientKnownRequestError) => {
+      switch (error.code) {
+        case "P2002":
+          throw new AppError("This email is already in use.", 409);
+        case "P2025":
+          throw new AppError("User not found.", 404);
+      }
+    });
   }
 }
