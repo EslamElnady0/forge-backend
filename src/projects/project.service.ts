@@ -35,6 +35,7 @@ export class ProjectService {
   }
 
   async getUserProjects(userId: number): Promise<Project[]> {
+    await this.userRepository.findById(userId);
     return await this.projectRepository.fetchUserProjects(userId);
   }
 

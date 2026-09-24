@@ -2,24 +2,18 @@ import { Request, Response, NextFunction } from "express";
 import { ZodType, ZodError } from "zod";
 import { AppError } from "../utils/appError";
 
-type RequestShape = {
-  body?: any;
-  params?: any;
-  query?: any;
-};
-
 export const validate =
-  (schema: ZodType<any>) =>
+  <T extends ZodType<any>>(schema: T) =>
   async (req: Request, _res: Response, next: NextFunction) => {
     try {
-      const parsed = (await schema.parseAsync({
+      const parsed = await schema.parseAsync({
         body: req.body,
         params: req.params,
         query: req.query,
-      })) as RequestShape;
+      });
 
       if (parsed.body !== undefined) req.body = parsed.body;
-      if (parsed.params !== undefined) req.params = parsed.params;
+      if (parsed.params !== undefined) req.params = parsed.params as any;
       if (parsed.query !== undefined) req.query = parsed.query;
 
       return next();

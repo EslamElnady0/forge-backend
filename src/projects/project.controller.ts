@@ -1,38 +1,25 @@
 import { Request, Response, NextFunction } from "express";
-import { z } from "zod";
 import { ProjectService } from "./project.service";
-import { AppError } from "../utils/appError";
+import {
+  CreateProjectInput,
+  ProjectIdParamInput,
+  AddMemberInput,
+} from "./project.schema";
 
-const CreateProjectSchema = z.object({
-  title: z.string().min(1, "title is required"),
-  description: z.string().optional(),
-  ownerId: z.coerce.number().int().nonnegative(),
-});
-
-const ProjectIdSchema = z.coerce.number().int().nonnegative();
-
-const AddMemberSchema = z.object({
-  projId: z.coerce.number().int().nonnegative(),
-  userId: z.coerce.number().int().nonnegative(),
-});
 export class ProjectController {
   constructor(private projectService: ProjectService) {}
 
   createProject = async (req: Request, res: Response, next: NextFunction) => {
-    const result = CreateProjectSchema.safeParse(req.body);
-
-    if (!result.success) {
-      const validationDetails = z.treeifyError(result.error).properties;
-      return next(new AppError("Validation failed", 400, validationDetails));
-    }
-
     try {
-      const p = this.projectService.createProject(
-        result.data.title,
-        result.data.description,
-        result.data.ownerId,
+      const { title, description, ownerId } =
+        req.body as CreateProjectInput["body"];
+
+      const project = await this.projectService.createProject(
+        title,
+        description,
+        ownerId,
       );
-      const project = await p;
+
       return res.status(201).json({
         id: project.id,
         title: project.title,
@@ -44,16 +31,15 @@ export class ProjectController {
     }
   };
 
-  getProject = async (req: Request, res: Response, next: NextFunction) => {
-    const validationRes = ProjectIdSchema.safeParse(req.params.id);
-
-    if (!validationRes.success) {
-      const validationDetails = z.treeifyError(validationRes.error);
-
-      return next(new AppError("Validation failed", 400, validationDetails));
-    }
+  getProject = async (
+    req: Request<any, any, ProjectIdParamInput["params"]>,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
-      const project = await this.projectService.getProject(validationRes.data);
+      const { id } = req.params;
+
+      const project = await this.projectService.getProject(id);
       return res.status(200).json({ project });
     } catch (error) {
       next(error);
@@ -61,16 +47,16 @@ export class ProjectController {
   };
 
   addMemberToProject = async (
-    req: Request,
+    req: Request<any, AddMemberInput["params"], AddMemberInput["body"]>,
     res: Response,
     next: NextFunction,
   ) => {
     try {
-      const projectId = req.params.id as unknown as number;
+      const { id } = req.params;
       const { userId } = req.body;
 
       const updatedProjectMessage =
-        await this.projectService.addMemberToProject(projectId, userId);
+        await this.projectService.addMemberToProject(id, userId);
 
       return res.status(200).json({
         success: true,
@@ -80,28 +66,23 @@ export class ProjectController {
       next(error);
     }
   };
+
   getProjectMembers = async (
-    req: Request,
+    req: Request<any, any, ProjectIdParamInput["params"]>,
     res: Response,
     next: NextFunction,
   ) => {
-    const validationRes = ProjectIdSchema.safeParse(req.params.id);
-
-    if (!validationRes.success) {
-      const validationDetails = z.treeifyError(validationRes.error);
-
-      return next(new AppError("Validation failed", 400, validationDetails));
-    }
     try {
-      const projectMembers = await this.projectService.getProjectMembers(
-        validationRes.data,
-      );
+      const { id } = req.params;
+
+      const projectMembers = await this.projectService.getProjectMembers(id);
       return res.status(200).json({ projectMembers });
     } catch (error) {
       next(error);
     }
   };
-  getProjects = async (req: Request, res: Response, next: NextFunction) => {
+
+  getProjects = async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const projects = await this.projectService.getProjects();
       return res.status(200).json({ projects });
@@ -110,18 +91,15 @@ export class ProjectController {
     }
   };
 
-  getUserProjects = async (req: Request, res: Response, next: NextFunction) => {
-    const validationRes = ProjectIdSchema.safeParse(req.params.id);
-
-    if (!validationRes.success) {
-      const validationDetails = z.treeifyError(validationRes.error);
-      return next(new AppError("Validation failed", 400, validationDetails));
-    }
-
+  getUserProjects = async (
+    req: Request<any, any, ProjectIdParamInput["params"]>,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
-      const projects = await this.projectService.getUserProjects(
-        validationRes.data,
-      );
+      const { id } = req.params;
+
+      const projects = await this.projectService.getUserProjects(id);
       return res.status(200).json({ projects });
     } catch (error) {
       next(error);

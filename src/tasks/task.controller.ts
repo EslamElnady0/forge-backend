@@ -1,36 +1,27 @@
 import { Request, Response, NextFunction } from "express";
-import { z } from "zod";
 import { TaskService } from "./task.service";
-import { TaskStatus } from "./task";
-import { AppError } from "../utils/appError";
-
-const CreateTaskSchema = z.object({
-  title: z.string().min(1, "title is required"),
-  status: z.enum(TaskStatus),
-  projectId: z.coerce.number().int().nonnegative(),
-  assigneeId: z.coerce.number().int().nonnegative().nullable().optional(),
-});
-
-const IdSchema = z.coerce.number().int().nonnegative();
+import {
+  CreateTaskInput,
+  TaskIdParamInput,
+  ProjectIdParamInput,
+  AssigneeIdParamInput,
+} from "./task.schema";
 
 export class TaskController {
   constructor(private taskService: TaskService) {}
 
   createTask = async (req: Request, res: Response, next: NextFunction) => {
-    const result = CreateTaskSchema.safeParse(req.body);
-
-    if (!result.success) {
-      const validationDetails = z.treeifyError(result.error).properties;
-      return next(new AppError("Validation failed", 400, validationDetails));
-    }
-
     try {
+      const { title, status, projectId, assigneeId } =
+        req.body as CreateTaskInput["body"];
+
       const task = await this.taskService.createTask(
-        result.data.title,
-        result.data.status,
-        result.data.projectId,
-        result.data.assigneeId,
+        title,
+        status,
+        projectId,
+        assigneeId,
       );
+
       return res.status(201).json({
         id: task.id,
         title: task.title,
@@ -43,23 +34,22 @@ export class TaskController {
     }
   };
 
-  getTask = async (req: Request, res: Response, next: NextFunction) => {
-    const validationRes = IdSchema.safeParse(req.params.id);
-
-    if (!validationRes.success) {
-      const validationDetails = z.treeifyError(validationRes.error);
-      return next(new AppError("Validation failed", 400, validationDetails));
-    }
-
+  getTask = async (
+    req: Request<any, any, TaskIdParamInput["params"]>,
+    res: Response,
+    next: NextFunction,
+  ) => {
     try {
-      const task = await this.taskService.getTask(validationRes.data);
+      const { id } = req.params;
+
+      const task = await this.taskService.getTask(id);
       return res.status(200).json({ task });
     } catch (error) {
       next(error);
     }
   };
 
-  getTasks = async (req: Request, res: Response, next: NextFunction) => {
+  getTasks = async (_req: Request, res: Response, next: NextFunction) => {
     try {
       const tasks = await this.taskService.getTasks();
       return res.status(200).json({ tasks });
@@ -73,15 +63,10 @@ export class TaskController {
     res: Response,
     next: NextFunction,
   ) => {
-    const validationRes = IdSchema.safeParse(req.params.projectId);
-
-    if (!validationRes.success) {
-      const validationDetails = z.treeifyError(validationRes.error);
-      return next(new AppError("Validation failed", 400, validationDetails));
-    }
-
     try {
-      const projectId = validationRes.data;
+      const { projectId } =
+        req.params as unknown as ProjectIdParamInput["params"];
+
       const tasks = await this.taskService.getTasksByProject(projectId);
       return res.status(200).json({ tasks });
     } catch (error) {
@@ -94,15 +79,10 @@ export class TaskController {
     res: Response,
     next: NextFunction,
   ) => {
-    const validationRes = IdSchema.safeParse(req.params.assigneeId);
-
-    if (!validationRes.success) {
-      const validationDetails = z.treeifyError(validationRes.error);
-      return next(new AppError("Validation failed", 400, validationDetails));
-    }
-
     try {
-      const assigneeId = validationRes.data;
+      const { assigneeId } =
+        req.params as unknown as AssigneeIdParamInput["params"];
+
       const tasks = await this.taskService.getTasksByAssignee(assigneeId);
       return res.status(200).json({ tasks });
     } catch (error) {
