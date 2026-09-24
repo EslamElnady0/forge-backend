@@ -14,7 +14,7 @@ const ProjectIdSchema = z.coerce.number().int().nonnegative();
 export class ProjectController {
   constructor(private projectService: ProjectService) {}
 
-  createProject = (req: Request, res: Response, next: NextFunction) => {
+  createProject = async (req: Request, res: Response, next: NextFunction) => {
     const result = CreateProjectSchema.safeParse(req.body);
 
     if (!result.success) {
@@ -25,21 +25,22 @@ export class ProjectController {
     try {
       const p = this.projectService.createProject(
         result.data.title,
-        result.data.description ?? "",
+        result.data.description,
         result.data.ownerId,
       );
+      const project = await p;
       return res.status(201).json({
-        id: p.id,
-        title: p.title,
-        description: p.description,
-        ownerId: p.ownerId,
+        id: project.id,
+        title: project.title,
+        description: project.description,
+        ownerId: project.ownerId,
       });
     } catch (error) {
       next(error);
     }
   };
 
-  getProject = (req: Request, res: Response, next: NextFunction) => {
+  getProject = async (req: Request, res: Response, next: NextFunction) => {
     const validationRes = ProjectIdSchema.safeParse(req.params.id);
 
     if (!validationRes.success) {
@@ -48,16 +49,16 @@ export class ProjectController {
       return next(new AppError("Validation failed", 400, validationDetails));
     }
     try {
-      const project = this.projectService.getProject(validationRes.data);
+      const project = await this.projectService.getProject(validationRes.data);
       return res.status(200).json({ project });
     } catch (error) {
       next(error);
     }
   };
 
-  getProjects = (req: Request, res: Response, next: NextFunction) => {
+  getProjects = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const projects = this.projectService.getProjects();
+      const projects = await this.projectService.getProjects();
       return res.status(200).json({ projects });
     } catch (error) {
       next(error);

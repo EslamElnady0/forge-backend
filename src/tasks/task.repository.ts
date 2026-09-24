@@ -1,28 +1,71 @@
-import { Task } from "./task";
-
-type NullableTask = Task | undefined;
-
-let tasks: Task[] = [];
+import { Prisma } from "../generated/prisma/client";
+import { TaskModel } from "../generated/prisma/models";
+import { AppError } from "../utils/appError";
+import { prisma, runDb } from "../utils/prisma";
+import { CreateTaskRequest, Task, TaskStatus } from "./task";
 
 export class TaskRepository {
-  save(task: Task): Task {
-    tasks.push(task);
-    return task;
+  async save(taskReq: CreateTaskRequest): Promise<Task> {
+    const result = await this.execute(() =>
+      prisma.task.create({
+        data: {
+          title: taskReq.title,
+          status: taskReq.status,
+          projectId: taskReq.projectId,
+          assigneeId: taskReq.assigneeId ?? null,
+        },
+      }),
+    );
+
+    return this.toTask(result);
   }
 
-  findById(id: number): NullableTask {
-    return tasks.find((t) => t.id === id);
+  async findById(id: number): Promise<Task> {
+    const result = await this.execute(() =>
+      prisma.task.findUniqueOrThrow({ where: { id } }),
+    );
+    return this.toTask(result);
   }
 
-  fetchTasks(): Task[] {
-    return tasks;
+  async fetchTasks(): Promise<Task[]> {
+    const rawTasks: TaskModel[] = await this.execute(() =>
+      prisma.task.findMany(),
+    );
+    return rawTasks.map((task) => this.toTask(task));
   }
 
-  findByProjectId(projectId: number): Task[] {
-    return tasks.filter((t) => t.projectId === projectId);
+  async findByProjectId(projectId: number): Promise<Task[]> {
+    const rawTasks: TaskModel[] = await this.execute(() =>
+      prisma.task.findMany({ where: { projectId } }),
+    );
+    return rawTasks.map((task) => this.toTask(task));
   }
 
-  findByAssigneeId(assigneeId: number): Task[] {
-    return tasks.filter((t) => t.assigneeId === assigneeId);
+  async findByAssigneeId(assigneeId: number): Promise<Task[]> {
+    const rawTasks: TaskModel[] = await this.execute(() =>
+      prisma.task.findMany({ where: { assigneeId } }),
+    );
+    return rawTasks.map((task) => this.toTask(task));
+  }
+
+  private toTask(task: TaskModel): Task {
+    return new Task(
+      task.id,
+      task.title,
+      task.status as TaskStatus,
+      task.projectId,
+      task.assigneeId,
+    );
+  }
+
+  private execute<T>(action: () => Promise<T>): Promise<T> {
+    return runDb(action, (error: Prisma.PrismaClientKnownRequestError) => {
+      switch (error.code) {
+        case "P2003":
+          throw new AppError("Project or assignee not found.", 404);
+        case "P2025":
+          throw new AppError("Task not found.", 404);
+      }
+    });
   }
 }

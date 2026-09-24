@@ -8,7 +8,7 @@ const CreateTaskSchema = z.object({
   title: z.string().min(1, "title is required"),
   status: z.enum(TaskStatus),
   projectId: z.coerce.number().int().nonnegative(),
-  assigneeId: z.coerce.number().int().nonnegative(),
+  assigneeId: z.coerce.number().int().nonnegative().optional(),
 });
 
 const IdSchema = z.coerce.number().int().nonnegative();
@@ -16,7 +16,7 @@ const IdSchema = z.coerce.number().int().nonnegative();
 export class TaskController {
   constructor(private taskService: TaskService) {}
 
-  createTask = (req: Request, res: Response, next: NextFunction) => {
+  createTask = async (req: Request, res: Response, next: NextFunction) => {
     const result = CreateTaskSchema.safeParse(req.body);
 
     if (!result.success) {
@@ -25,25 +25,25 @@ export class TaskController {
     }
 
     try {
-      const t = this.taskService.createTask(
+      const task = await this.taskService.createTask(
         result.data.title,
         result.data.status,
         result.data.projectId,
         result.data.assigneeId,
       );
       return res.status(201).json({
-        id: t.id,
-        title: t.title,
-        status: t.status,
-        projectId: t.projectId,
-        assigneeId: t.assigneeId,
+        id: task.id,
+        title: task.title,
+        status: task.status,
+        projectId: task.projectId,
+        assigneeId: task.assigneeId,
       });
     } catch (error) {
       next(error);
     }
   };
 
-  getTask = (req: Request, res: Response, next: NextFunction) => {
+  getTask = async (req: Request, res: Response, next: NextFunction) => {
     const validationRes = IdSchema.safeParse(req.params.id);
 
     if (!validationRes.success) {
@@ -52,23 +52,27 @@ export class TaskController {
     }
 
     try {
-      const task = this.taskService.getTask(validationRes.data);
+      const task = await this.taskService.getTask(validationRes.data);
       return res.status(200).json({ task });
     } catch (error) {
       next(error);
     }
   };
 
-  getTasks = (req: Request, res: Response, next: NextFunction) => {
+  getTasks = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const tasks = this.taskService.getTasks();
+      const tasks = await this.taskService.getTasks();
       return res.status(200).json({ tasks });
     } catch (error) {
       next(error);
     }
   };
 
-  getTasksByProject = (req: Request, res: Response, next: NextFunction) => {
+  getTasksByProject = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
     const validationRes = IdSchema.safeParse(req.params.projectId);
 
     if (!validationRes.success) {
@@ -78,14 +82,18 @@ export class TaskController {
 
     try {
       const projectId = validationRes.data;
-      const tasks = this.taskService.getTasksByProject(projectId);
+      const tasks = await this.taskService.getTasksByProject(projectId);
       return res.status(200).json({ tasks });
     } catch (error) {
       next(error);
     }
   };
 
-  getTasksByAssignee = (req: Request, res: Response, next: NextFunction) => {
+  getTasksByAssignee = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
     const validationRes = IdSchema.safeParse(req.params.assigneeId);
 
     if (!validationRes.success) {
@@ -95,7 +103,7 @@ export class TaskController {
 
     try {
       const assigneeId = validationRes.data;
-      const tasks = this.taskService.getTasksByAssignee(assigneeId);
+      const tasks = await this.taskService.getTasksByAssignee(assigneeId);
       return res.status(200).json({ tasks });
     } catch (error) {
       next(error);

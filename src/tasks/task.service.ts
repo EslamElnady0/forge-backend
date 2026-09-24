@@ -1,5 +1,5 @@
 import { AppError } from "../utils/appError";
-import { Task, TaskStatus } from "./task";
+import { CreateTaskRequest, Task, TaskStatus } from "./task";
 import { TaskRepository } from "./task.repository";
 
 export class TaskService {
@@ -11,29 +11,34 @@ export class TaskService {
     title: string,
     status: TaskStatus,
     projectId: number,
-    assigneeId: number,
-  ): Task {
-    const t: Task = new Task(title, status, projectId, assigneeId);
-    return this.taskRepository.save(t);
+    assigneeId: number | undefined,
+  ): Promise<Task> {
+    const task: CreateTaskRequest = new CreateTaskRequest(
+      title,
+      status,
+      projectId,
+      assigneeId,
+    );
+    return this.taskRepository.save(task);
   }
 
-  getTask(id: number): Task {
-    const found = this.taskRepository.findById(id);
+  async getTask(id: number): Promise<Task> {
+    const found = await this.taskRepository.findById(id);
     if (found == null) {
       throw new AppError("Task not found", 404);
     }
     return found;
   }
 
-  getTasks(): Task[] {
-    return this.taskRepository.fetchTasks();
+  async getTasks(): Promise<Task[]> {
+    return await this.taskRepository.fetchTasks();
   }
 
-  getTasksByProject(projectId: number): Task[] {
-    return this.taskRepository.findByProjectId(projectId);
+  async getTasksByProject(projectId: number): Promise<Task[]> {
+    return await this.taskRepository.findByProjectId(projectId);
   }
 
-  getTasksByAssignee(assigneeId: number): Task[] {
-    return this.taskRepository.findByAssigneeId(assigneeId);
+  async getTasksByAssignee(assigneeId: number): Promise<Task[]> {
+    return await this.taskRepository.findByAssigneeId(assigneeId);
   }
 }

@@ -1,12 +1,16 @@
 export class Project {
-  private static totalCount: number = 0;
-  public readonly id: number;
+  constructor(
+    public readonly id: number,
+    public title: string,
+    public description: string | null,
+    public ownerId: number,
+  ) {}
+}
+
+export class CreateProjectRequest {
   constructor(
     public title: string,
-    public description: string,
+    public description: string | undefined,
     public ownerId: number,
-  ) {
-    this.id = Project.totalCount;
-    Project.totalCount++;
-  }
+  ) {}
 }
