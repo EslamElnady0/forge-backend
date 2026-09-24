@@ -11,6 +11,10 @@ const CreateProjectSchema = z.object({
 
 const ProjectIdSchema = z.coerce.number().int().nonnegative();
 
+const AddMemberSchema = z.object({
+  projId: z.coerce.number().int().nonnegative(),
+  userId: z.coerce.number().int().nonnegative(),
+});
 export class ProjectController {
   constructor(private projectService: ProjectService) {}
 
@@ -56,9 +60,68 @@ export class ProjectController {
     }
   };
 
+  addMemberToProject = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    try {
+      const projectId = req.params.id as unknown as number;
+      const { userId } = req.body;
+
+      const updatedProjectMessage =
+        await this.projectService.addMemberToProject(projectId, userId);
+
+      return res.status(200).json({
+        success: true,
+        data: updatedProjectMessage,
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+  getProjectMembers = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    const validationRes = ProjectIdSchema.safeParse(req.params.id);
+
+    if (!validationRes.success) {
+      const validationDetails = z.treeifyError(validationRes.error);
+
+      return next(new AppError("Validation failed", 400, validationDetails));
+    }
+    try {
+      const projectMembers = await this.projectService.getProjectMembers(
+        validationRes.data,
+      );
+      return res.status(200).json({ projectMembers });
+    } catch (error) {
+      next(error);
+    }
+  };
   getProjects = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const projects = await this.projectService.getProjects();
+      return res.status(200).json({ projects });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getUserProjects = async (req: Request, res: Response, next: NextFunction) => {
+    const validationRes = ProjectIdSchema.safeParse(req.params.id);
+
+    if (!validationRes.success) {
+      const validationDetails = z.treeifyError(validationRes.error);
+      return next(new AppError("Validation failed", 400, validationDetails));
+    }
+
+    try {
+      const projects = await this.projectService.getUserProjects(
+        validationRes.data,
+      );
       return res.status(200).json({ projects });
     } catch (error) {
       next(error);

@@ -1,6 +1,11 @@
 // src/projects/project.service.ts
 import { AppError } from "../utils/appError";
-import { CreateProjectRequest, Project } from "./project";
+import {
+  addMemberToProjectResponse,
+  CreateProjectRequest,
+  Project,
+  ProjectMemberResponse,
+} from "./project";
 import { ProjectRepository } from "./project.repository";
 import { UserRepository } from "../users/user.repository";
 
@@ -27,5 +32,21 @@ export class ProjectService {
 
   async getProjects(): Promise<Project[]> {
     return await this.projectRepository.fetchProjects();
+  }
+
+  async getUserProjects(userId: number): Promise<Project[]> {
+    return await this.projectRepository.fetchUserProjects(userId);
+  }
+
+  async addMemberToProject(
+    projectId: number,
+    userId: number,
+  ): Promise<addMemberToProjectResponse> {
+    await this.userRepository.findById(userId);
+    return await this.projectRepository.addMember(projectId, userId);
+  }
+
+  async getProjectMembers(projectId: number): Promise<ProjectMemberResponse[]> {
+    return await this.projectRepository.fetchProjectMembers(projectId);
   }
 }

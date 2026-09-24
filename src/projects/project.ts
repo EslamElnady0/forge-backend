@@ -14,3 +14,15 @@ export class CreateProjectRequest {
     public ownerId: number,
   ) {}
 }
+
+export class addMemberToProjectResponse {
+  constructor(public message: string) {}
+}
+
+export class ProjectMemberResponse {
+  constructor(
+    public id: number,
+    public name: string,
+    public email: string,
+  ) {}
+}

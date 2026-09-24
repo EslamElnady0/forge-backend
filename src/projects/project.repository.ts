@@ -1,8 +1,13 @@
 import { Prisma } from "../generated/prisma/client";
-import { ProjectModel } from "../generated/prisma/models";
+import { ProjectModel, UserModel } from "../generated/prisma/models";
 import { AppError } from "../utils/appError";
 import { prisma, runDb } from "../utils/prisma";
-import { CreateProjectRequest, Project } from "./project";
+import {
+  addMemberToProjectResponse,
+  CreateProjectRequest,
+  Project,
+  ProjectMemberResponse,
+} from "./project";
 
 export class ProjectRepository {
   async save(projectReq: CreateProjectRequest): Promise<Project> {
@@ -12,6 +17,9 @@ export class ProjectRepository {
           title: projectReq.title,
           description: projectReq.description ?? null,
           ownerId: projectReq.ownerId,
+          members: {
+            connect: { id: projectReq.ownerId },
+          },
         },
       }),
     );
@@ -21,6 +29,41 @@ export class ProjectRepository {
       result.title,
       result.description,
       result.ownerId,
+    );
+  }
+  async addMember(
+    projectId: number,
+    userId: number,
+  ): Promise<addMemberToProjectResponse> {
+    const result = await this.execute(() =>
+      prisma.project.update({
+        where: { id: projectId },
+        data: {
+          members: {
+            connect: { id: userId },
+          },
+        },
+      }),
+    );
+
+    return new addMemberToProjectResponse(
+      `Member added successfully to the project ${result.title}`,
+    );
+  }
+
+  async fetchProjectMembers(
+    projectId: number,
+  ): Promise<ProjectMemberResponse[]> {
+    const project = await this.execute(() =>
+      prisma.project.findUniqueOrThrow({
+        where: { id: projectId },
+        include: { members: true, owner: true },
+      }),
+    );
+
+    return project.members.map(
+      (member) =>
+        new ProjectMemberResponse(member.id, member.name, member.email),
     );
   }
 
@@ -41,6 +84,26 @@ export class ProjectRepository {
     const rawProjects: ProjectModel[] = await this.execute(() =>
       prisma.project.findMany(),
     );
+    return rawProjects.map(
+      (project) =>
+        new Project(
+          project.id,
+          project.title,
+          project.description,
+          project.ownerId,
+        ),
+    );
+  }
+
+  async fetchUserProjects(userId: number): Promise<Project[]> {
+    const rawProjects: ProjectModel[] = await this.execute(() =>
+      prisma.project.findMany({
+        where: {
+          OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
+        },
+      }),
+    );
+
     return rawProjects.map(
       (project) =>
         new Project(
