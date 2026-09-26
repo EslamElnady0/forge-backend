@@ -267,7 +267,7 @@ export type ProjectCreateInput = {
   description?: string | null
   owner: Prisma.UserCreateNestedOneWithoutOwnedProjectsInput
   tasks?: Prisma.TaskCreateNestedManyWithoutProjectInput
-  members?: Prisma.UserCreateNestedManyWithoutMemberOfInput
+  members?: Prisma.UserCreateNestedManyWithoutMemberProjectsInput
 }
 
 export type ProjectUncheckedCreateInput = {
@@ -276,7 +276,7 @@ export type ProjectUncheckedCreateInput = {
   description?: string | null
   ownerId: number
   tasks?: Prisma.TaskUncheckedCreateNestedManyWithoutProjectInput
-  members?: Prisma.UserUncheckedCreateNestedManyWithoutMemberOfInput
+  members?: Prisma.UserUncheckedCreateNestedManyWithoutMemberProjectsInput
 }
 
 export type ProjectUpdateInput = {
@@ -284,7 +284,7 @@ export type ProjectUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedProjectsNestedInput
   tasks?: Prisma.TaskUpdateManyWithoutProjectNestedInput
-  members?: Prisma.UserUpdateManyWithoutMemberOfNestedInput
+  members?: Prisma.UserUpdateManyWithoutMemberProjectsNestedInput
 }
 
 export type ProjectUncheckedUpdateInput = {
@@ -293,7 +293,7 @@ export type ProjectUncheckedUpdateInput = {
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ownerId?: Prisma.IntFieldUpdateOperationsInput | number
   tasks?: Prisma.TaskUncheckedUpdateManyWithoutProjectNestedInput
-  members?: Prisma.UserUncheckedUpdateManyWithoutMemberOfNestedInput
+  members?: Prisma.UserUncheckedUpdateManyWithoutMemberProjectsNestedInput
 }
 
 export type ProjectCreateManyInput = {
@@ -441,10 +441,6 @@ export type ProjectUncheckedUpdateManyWithoutMembersNestedInput = {
   deleteMany?: Prisma.ProjectScalarWhereInput | Prisma.ProjectScalarWhereInput[]
 }
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
-}
-
 export type ProjectCreateNestedOneWithoutTasksInput = {
   create?: Prisma.XOR<Prisma.ProjectCreateWithoutTasksInput, Prisma.ProjectUncheckedCreateWithoutTasksInput>
   connectOrCreate?: Prisma.ProjectCreateOrConnectWithoutTasksInput
@@ -463,7 +459,7 @@ export type ProjectCreateWithoutOwnerInput = {
   title: string
   description?: string | null
   tasks?: Prisma.TaskCreateNestedManyWithoutProjectInput
-  members?: Prisma.UserCreateNestedManyWithoutMemberOfInput
+  members?: Prisma.UserCreateNestedManyWithoutMemberProjectsInput
 }
 
 export type ProjectUncheckedCreateWithoutOwnerInput = {
@@ -471,7 +467,7 @@ export type ProjectUncheckedCreateWithoutOwnerInput = {
   title: string
   description?: string | null
   tasks?: Prisma.TaskUncheckedCreateNestedManyWithoutProjectInput
-  members?: Prisma.UserUncheckedCreateNestedManyWithoutMemberOfInput
+  members?: Prisma.UserUncheckedCreateNestedManyWithoutMemberProjectsInput
 }
 
 export type ProjectCreateOrConnectWithoutOwnerInput = {
@@ -550,7 +546,7 @@ export type ProjectCreateWithoutTasksInput = {
   title: string
   description?: string | null
   owner: Prisma.UserCreateNestedOneWithoutOwnedProjectsInput
-  members?: Prisma.UserCreateNestedManyWithoutMemberOfInput
+  members?: Prisma.UserCreateNestedManyWithoutMemberProjectsInput
 }
 
 export type ProjectUncheckedCreateWithoutTasksInput = {
@@ -558,7 +554,7 @@ export type ProjectUncheckedCreateWithoutTasksInput = {
   title: string
   description?: string | null
   ownerId: number
-  members?: Prisma.UserUncheckedCreateNestedManyWithoutMemberOfInput
+  members?: Prisma.UserUncheckedCreateNestedManyWithoutMemberProjectsInput
 }
 
 export type ProjectCreateOrConnectWithoutTasksInput = {
@@ -581,7 +577,7 @@ export type ProjectUpdateWithoutTasksInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   owner?: Prisma.UserUpdateOneRequiredWithoutOwnedProjectsNestedInput
-  members?: Prisma.UserUpdateManyWithoutMemberOfNestedInput
+  members?: Prisma.UserUpdateManyWithoutMemberProjectsNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutTasksInput = {
@@ -589,7 +585,7 @@ export type ProjectUncheckedUpdateWithoutTasksInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   ownerId?: Prisma.IntFieldUpdateOperationsInput | number
-  members?: Prisma.UserUncheckedUpdateManyWithoutMemberOfNestedInput
+  members?: Prisma.UserUncheckedUpdateManyWithoutMemberProjectsNestedInput
 }
 
 export type ProjectCreateManyOwnerInput = {
@@ -602,7 +598,7 @@ export type ProjectUpdateWithoutOwnerInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tasks?: Prisma.TaskUpdateManyWithoutProjectNestedInput
-  members?: Prisma.UserUpdateManyWithoutMemberOfNestedInput
+  members?: Prisma.UserUpdateManyWithoutMemberProjectsNestedInput
 }
 
 export type ProjectUncheckedUpdateWithoutOwnerInput = {
@@ -610,7 +606,7 @@ export type ProjectUncheckedUpdateWithoutOwnerInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   tasks?: Prisma.TaskUncheckedUpdateManyWithoutProjectNestedInput
-  members?: Prisma.UserUncheckedUpdateManyWithoutMemberOfNestedInput
+  members?: Prisma.UserUncheckedUpdateManyWithoutMemberProjectsNestedInput
 }
 
 export type ProjectUncheckedUpdateManyWithoutOwnerInput = {

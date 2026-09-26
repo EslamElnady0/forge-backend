@@ -279,7 +279,7 @@ export type TaskCreateInput = {
   title: string
   status?: string
   project: Prisma.ProjectCreateNestedOneWithoutTasksInput
-  assignee?: Prisma.UserCreateNestedOneWithoutTasksInput
+  assignee?: Prisma.UserCreateNestedOneWithoutAssignedTasksInput
 }
 
 export type TaskUncheckedCreateInput = {
@@ -294,7 +294,7 @@ export type TaskUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   project?: Prisma.ProjectUpdateOneRequiredWithoutTasksNestedInput
-  assignee?: Prisma.UserUpdateOneWithoutTasksNestedInput
+  assignee?: Prisma.UserUpdateOneWithoutAssignedTasksNestedInput
 }
 
 export type TaskUncheckedUpdateInput = {
@@ -517,7 +517,7 @@ export type TaskScalarWhereInput = {
 export type TaskCreateWithoutProjectInput = {
   title: string
   status?: string
-  assignee?: Prisma.UserCreateNestedOneWithoutTasksInput
+  assignee?: Prisma.UserCreateNestedOneWithoutAssignedTasksInput
 }
 
 export type TaskUncheckedCreateWithoutProjectInput = {
@@ -590,7 +590,7 @@ export type TaskCreateManyProjectInput = {
 export type TaskUpdateWithoutProjectInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
-  assignee?: Prisma.UserUpdateOneWithoutTasksNestedInput
+  assignee?: Prisma.UserUpdateOneWithoutAssignedTasksNestedInput
 }
 
 export type TaskUncheckedUpdateWithoutProjectInput = {

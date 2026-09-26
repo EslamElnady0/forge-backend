@@ -5,7 +5,6 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { Prisma } from '../generated/prisma/client';
@@ -13,18 +12,6 @@ import { Prisma } from '../generated/prisma/client';
 @Injectable()
 export class UsersRepository {
   constructor(private readonly prisma: PrismaService) {}
-
-  async save(dto: CreateUserDto): Promise<User> {
-    const raw = await this.execute(() =>
-      this.prisma.user.create({
-        data: {
-          name: dto.name,
-          email: dto.email,
-        },
-      }),
-    );
-    return new User(raw.id, raw.name, raw.email);
-  }
 
   async findById(id: number): Promise<User> {
     const raw = await this.execute(() =>
