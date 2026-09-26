@@ -12,13 +12,24 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
-  id             Int       @id @default(autoincrement())
-  name           String
-  email          String    @unique
-  ownedProjects  Project[] @relation("ProjectOwner")
-  tasks          Task[]
-  memberOf       Project[] @relation("ProjectMembers") // The invisible junction table!
+  id                 Int       @id @default(autoincrement())
+  name               String
+  email              String    @unique
+  password           String
+  role               Role      @default(USER)
+  hashedRefreshToken String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @default(now()) @updatedAt
+
+  ownedProjects      Project[] @relation("ProjectOwner")
+  memberProjects     Project[] @relation("ProjectMembers")
+  assignedTasks      Task[]
 }
 
 model Project {
