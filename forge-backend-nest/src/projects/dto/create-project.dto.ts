@@ -14,9 +14,4 @@ export class CreateProjectDto {
   @IsString()
   @IsOptional()
   description?: string;
-
-  @IsInt()
-  @IsPositive()
-  @IsNotEmpty({ message: 'ownerId is required' })
-  ownerId: number;
 }

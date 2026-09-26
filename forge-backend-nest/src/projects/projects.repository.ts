@@ -32,10 +32,26 @@ export class ProjectsRepository {
           title: dto.title,
           description: dto.description,
           ownerId: dto.ownerId,
+          members: {
+            connect: { id: dto.ownerId },
+          },
+        },
+        include: {
+          members: true,
         },
       });
 
-      return new Project(raw.id, raw.title, raw.description, raw.ownerId);
+      const members = raw.members?.map(
+        (m) => new ProjectMember(m.id, m.name, m.email),
+      );
+
+      return new Project(
+        raw.id,
+        raw.title,
+        raw.description,
+        raw.ownerId,
+        members,
+      );
     });
   }
 
