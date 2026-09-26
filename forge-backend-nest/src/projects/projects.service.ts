@@ -1,52 +1,89 @@
-import { Injectable } from '@nestjs/common';
-import { CreateProjectDto } from './dto/create-project.dto';
-import { Project, ProjectMember } from './entities/project.entity';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ProjectsRepository } from './projects.repository';
-import { UsersService } from '../users/users.service';
+import { CreateProjectDto } from './dto/create-project.dto';
 
 @Injectable()
 export class ProjectsService {
-  constructor(
-    private readonly projectRepository: ProjectsRepository,
-    private readonly usersService: UsersService,
-  ) {}
+  constructor(private readonly projectRepository: ProjectsRepository) {}
 
-  async createProject(dto: CreateProjectDto): Promise<Project> {
-    await this.usersService.getUser(dto.ownerId);
+  async createProject(dto: CreateProjectDto & { ownerId: number }) {
     return this.projectRepository.save(dto);
   }
 
-  async getProject(id: number): Promise<Project> {
-    return this.projectRepository.findById(id);
+  async getProjects(userId: number, userRole: string) {
+    const isAdmin = userRole === 'ADMIN';
+    return this.projectRepository.findAllScoped(userId, isAdmin);
   }
 
-  async getProjects(): Promise<Project[]> {
-    return this.projectRepository.fetchProjects();
-  }
+  async getProject(id: number, userId: number, userRole: string) {
+    const isAdmin = userRole === 'ADMIN';
+    const project = await this.projectRepository.findByIdScoped(
+      id,
+      userId,
+      isAdmin,
+    );
 
-  async getUserProjects(userId: number): Promise<Project[]> {
-    await this.usersService.getUser(userId);
-    return this.projectRepository.fetchUserProjects(userId);
+    if (!project) {
+      throw new NotFoundException(
+        `Project with ID ${id} not found or access denied.`,
+      );
+    }
+
+    return project;
   }
 
   async addMemberToProject(
     projectId: number,
-    userId: number,
-  ): Promise<{ message: string }> {
-    await this.getProject(projectId);
-    await this.usersService.getUser(userId);
-    return this.projectRepository.addMember(projectId, userId);
+    newMemberId: number,
+    callerUserId: number,
+    userRole: string,
+  ) {
+    const isAdmin = userRole === 'ADMIN';
+    await this.projectRepository.addMember(
+      projectId,
+      newMemberId,
+      callerUserId,
+      isAdmin,
+    );
+    return `User ${newMemberId} added to project ${projectId} successfully.`;
   }
 
-  async getProjectMembers(projectId: number): Promise<ProjectMember[]> {
-    await this.getProject(projectId);
-    return this.projectRepository.fetchProjectMembers(projectId);
+  async getProjectMembers(projectId: number, userId: number, userRole: string) {
+    const isAdmin = userRole === 'ADMIN';
+    const project = await this.projectRepository.findByIdScoped(
+      projectId,
+      userId,
+      isAdmin,
+      true,
+    );
+
+    if (!project) {
+      throw new NotFoundException(
+        `Project with ID ${projectId} not found or access denied.`,
+      );
+    }
+
+    return project.members ?? [];
   }
 
-  async isUserMemberOrOwner(
-    projectId: number,
-    userId: number,
-  ): Promise<boolean> {
-    return this.projectRepository.isUserMemberOrOwner(projectId, userId);
+  async deleteProject(id: number, callerUserId: number, userRole: string) {
+    const isAdmin = userRole === 'ADMIN';
+    const deleted = await this.projectRepository.deleteScoped(
+      id,
+      callerUserId,
+      isAdmin,
+    );
+
+    if (!deleted) {
+      throw new ForbiddenException(
+        'Project not found or you do not have permission to delete it.',
+      );
+    }
+
+    return { id };
   }
 }

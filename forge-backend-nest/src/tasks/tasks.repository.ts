@@ -1,5 +1,5 @@
 import {
-  BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   ServiceUnavailableException,
@@ -14,76 +14,188 @@ import { Prisma } from '../generated/prisma/client';
 export class TasksRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async save(dto: CreateTaskDto): Promise<Task> {
-    const raw = await this.execute(() =>
-      this.prisma.task.create({
+  private getAccessFilter(
+    userId: number,
+    isAdmin: boolean,
+  ): Prisma.TaskWhereInput {
+    if (isAdmin) return {};
+
+    return {
+      project: {
+        OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
+      },
+    };
+  }
+
+  async save(
+    dto: CreateTaskDto,
+    userId: number,
+    isAdmin: boolean,
+  ): Promise<Task> {
+    return this.execute(async () => {
+      if (!isAdmin) {
+        const canAccess = await this.prisma.project.count({
+          where: {
+            id: dto.projectId,
+            OR: [{ ownerId: userId }, { members: { some: { id: userId } } }],
+          },
+        });
+
+        if (canAccess === 0) {
+          throw new ForbiddenException(
+            'You do not have permission to add tasks to this project.',
+          );
+        }
+      }
+
+      const raw = await this.prisma.task.create({
         data: {
           title: dto.title,
           status: dto.status,
           projectId: dto.projectId,
-          assigneeId: dto.assigneeId ?? null,
+          assigneeId: dto.assigneeId,
         },
-      }),
-    );
-    return this.toEntity(raw);
+      });
+
+      return new Task(
+        raw.id,
+        raw.title,
+        raw.status as TaskStatus,
+        raw.projectId,
+        raw.assigneeId,
+      );
+    });
   }
 
-  async findById(id: number): Promise<Task> {
-    const raw = await this.execute(() =>
-      this.prisma.task.findUniqueOrThrow({ where: { id } }),
-    );
-    return this.toEntity(raw);
-  }
-
-  async fetchTasks(): Promise<Task[]> {
-    const rawTasks = await this.execute(() => this.prisma.task.findMany());
-    return rawTasks.map((t) => this.toEntity(t));
-  }
-
-  async findByProjectId(projectId: number): Promise<Task[]> {
-    const rawTasks = await this.execute(() =>
-      this.prisma.task.findMany({ where: { projectId } }),
-    );
-    return rawTasks.map((t) => this.toEntity(t));
-  }
-
-  async findByAssigneeId(assigneeId: number): Promise<Task[]> {
-    const rawTasks = await this.execute(() =>
-      this.prisma.task.findMany({ where: { assigneeId } }),
-    );
-    return rawTasks.map((t) => this.toEntity(t));
-  }
-
-  async update(id: number, dto: UpdateTaskDto): Promise<Task> {
-    const raw = await this.execute(() =>
-      this.prisma.task.update({
-        where: { id },
-        data: {
-          ...(dto.title && { title: dto.title }),
-          ...(dto.status && { status: dto.status }),
-          ...(dto.projectId && { projectId: dto.projectId }),
-          ...(dto.assigneeId !== undefined && { assigneeId: dto.assigneeId }),
+  async findByIdScoped(
+    id: number,
+    userId: number,
+    isAdmin: boolean,
+  ): Promise<Task | null> {
+    return this.execute(async () => {
+      const raw = await this.prisma.task.findFirst({
+        where: {
+          id,
+          ...this.getAccessFilter(userId, isAdmin),
         },
-      }),
-    );
-    return this.toEntity(raw);
+      });
+
+      if (!raw) return null;
+      return new Task(
+        raw.id,
+        raw.title,
+        raw.status as TaskStatus,
+        raw.projectId,
+        raw.assigneeId,
+      );
+    });
   }
 
-  async delete(id: number): Promise<Task> {
-    const raw = await this.execute(() =>
-      this.prisma.task.delete({ where: { id } }),
-    );
-    return this.toEntity(raw);
+  async findAllScoped(userId: number, isAdmin: boolean): Promise<Task[]> {
+    return this.execute(async () => {
+      const records = await this.prisma.task.findMany({
+        where: this.getAccessFilter(userId, isAdmin),
+      });
+
+      return records.map(
+        (t) =>
+          new Task(
+            t.id,
+            t.title,
+            t.status as TaskStatus,
+            t.projectId,
+            t.assigneeId,
+          ),
+      );
+    });
   }
 
-  private toEntity(raw: any): Task {
-    return new Task(
-      raw.id,
-      raw.title,
-      raw.status as TaskStatus,
-      raw.projectId,
-      raw.assigneeId,
-    );
+  async findByProjectScoped(
+    projectId: number,
+    userId: number,
+    isAdmin: boolean,
+  ): Promise<Task[]> {
+    return this.execute(async () => {
+      const records = await this.prisma.task.findMany({
+        where: {
+          projectId,
+          ...this.getAccessFilter(userId, isAdmin),
+        },
+      });
+
+      return records.map(
+        (t) =>
+          new Task(
+            t.id,
+            t.title,
+            t.status as TaskStatus,
+            t.projectId,
+            t.assigneeId,
+          ),
+      );
+    });
+  }
+
+  async findByAssigneeScoped(
+    assigneeId: number,
+    userId: number,
+    isAdmin: boolean,
+  ): Promise<Task[]> {
+    return this.execute(async () => {
+      const records = await this.prisma.task.findMany({
+        where: {
+          assigneeId,
+          ...this.getAccessFilter(userId, isAdmin),
+        },
+      });
+
+      return records.map(
+        (t) =>
+          new Task(
+            t.id,
+            t.title,
+            t.status as TaskStatus,
+            t.projectId,
+            t.assigneeId,
+          ),
+      );
+    });
+  }
+
+  async updateScoped(
+    id: number,
+    dto: UpdateTaskDto,
+    userId: number,
+    isAdmin: boolean,
+  ): Promise<boolean> {
+    return this.execute(async () => {
+      const result = await this.prisma.task.updateMany({
+        where: {
+          id,
+          ...this.getAccessFilter(userId, isAdmin),
+        },
+        data: dto,
+      });
+
+      return result.count > 0;
+    });
+  }
+
+  async deleteScoped(
+    id: number,
+    userId: number,
+    isAdmin: boolean,
+  ): Promise<boolean> {
+    return this.execute(async () => {
+      const result = await this.prisma.task.deleteMany({
+        where: {
+          id,
+          ...this.getAccessFilter(userId, isAdmin),
+        },
+      });
+
+      return result.count > 0;
+    });
   }
 
   private async execute<T>(action: () => Promise<T>): Promise<T> {
@@ -100,13 +212,10 @@ export class TasksRepository {
       }
 
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        switch (error.code) {
-          case 'P2025':
-            throw new NotFoundException('Task not found.');
-          case 'P2003':
-            throw new BadRequestException(
-              'Referenced relation does not exist.',
-            );
+        if (error.code === 'P2003') {
+          throw new NotFoundException(
+            'Referenced Project or Assignee does not exist.',
+          );
         }
       }
 

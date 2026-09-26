@@ -1,69 +1,99 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { TasksRepository } from './tasks.repository';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-import { Task } from './entities/task.entity';
-import { TasksRepository } from './tasks.repository';
-import { UsersService } from '../users/users.service';
-import { ProjectsService } from '../projects/projects.service';
 
 @Injectable()
 export class TasksService {
-  constructor(
-    private readonly tasksRepository: TasksRepository,
-    private readonly usersService: UsersService,
-    private readonly projectsService: ProjectsService,
-  ) {}
+  constructor(private readonly taskRepository: TasksRepository) {}
 
-  async createTask(dto: CreateTaskDto): Promise<Task> {
-    await this.projectsService.getProject(dto.projectId);
+  async createTask(dto: CreateTaskDto, userId: number, userRole: string) {
+    return this.taskRepository.save(dto, userId, this.isAdmin(userRole));
+  }
 
-    if (dto.assigneeId != null) {
-      await this.usersService.getUser(dto.assigneeId);
+  async getTask(id: number, userId: number, userRole: string) {
+    const task = await this.taskRepository.findByIdScoped(
+      id,
+      userId,
+      this.isAdmin(userRole),
+    );
 
-      const isMember = await this.projectsService.isUserMemberOrOwner(
-        dto.projectId,
-        dto.assigneeId,
+    if (!task) {
+      throw new NotFoundException(
+        `Task with ID ${id} not found or access denied.`,
       );
-
-      if (!isMember) {
-        throw new BadRequestException(
-          `User with ID ${dto.assigneeId} is not a member of project ${dto.projectId}.`,
-        );
-      }
     }
 
-    return this.tasksRepository.save(dto);
+    return task;
   }
 
-  async getTask(id: number): Promise<Task> {
-    return this.tasksRepository.findById(id);
+  async getTasks(userId: number, userRole: string) {
+    return this.taskRepository.findAllScoped(userId, this.isAdmin(userRole));
   }
 
-  async getTasks(): Promise<Task[]> {
-    return this.tasksRepository.fetchTasks();
+  async getTasksByProject(projectId: number, userId: number, userRole: string) {
+    return this.taskRepository.findByProjectScoped(
+      projectId,
+      userId,
+      this.isAdmin(userRole),
+    );
   }
 
-  async getTasksByProject(projectId: number): Promise<Task[]> {
-    await this.projectsService.getProject(projectId);
-    return this.tasksRepository.findByProjectId(projectId);
+  async getTasksByAssignee(
+    assigneeId: number,
+    userId: number,
+    userRole: string,
+  ) {
+    return this.taskRepository.findByAssigneeScoped(
+      assigneeId,
+      userId,
+      this.isAdmin(userRole),
+    );
   }
 
-  async getTasksByAssignee(assigneeId: number): Promise<Task[]> {
-    await this.usersService.getUser(assigneeId);
-    return this.tasksRepository.findByAssigneeId(assigneeId);
-  }
+  async updateTask(
+    id: number,
+    dto: UpdateTaskDto,
+    userId: number,
+    userRole: string,
+  ) {
+    const updated = await this.taskRepository.updateScoped(
+      id,
+      dto,
+      userId,
+      this.isAdmin(userRole),
+    );
 
-  async updateTask(id: number, dto: UpdateTaskDto): Promise<Task> {
-    if (dto.projectId) {
-      await this.projectsService.getProject(dto.projectId);
+    if (!updated) {
+      throw new NotFoundException(
+        `Task with ID ${id} not found or access denied.`,
+      );
     }
-    if (dto.assigneeId) {
-      await this.usersService.getUser(dto.assigneeId);
-    }
-    return this.tasksRepository.update(id, dto);
+
+    return this.taskRepository.findByIdScoped(
+      id,
+      userId,
+      this.isAdmin(userRole),
+    );
   }
 
-  async deleteTask(id: number): Promise<Task> {
-    return this.tasksRepository.delete(id);
+  async deleteTask(id: number, userId: number, userRole: string) {
+    const deleted = await this.taskRepository.deleteScoped(
+      id,
+      userId,
+      this.isAdmin(userRole),
+    );
+
+    if (!deleted) {
+      throw new NotFoundException(
+        `Task with ID ${id} not found or access denied.`,
+      );
+    }
+
+    return { id };
+  }
+
+  isAdmin(userRole: string): boolean {
+    return userRole === 'ADMIN';
   }
 }

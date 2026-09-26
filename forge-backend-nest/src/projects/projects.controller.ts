@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -15,6 +16,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { AddMemberDto } from './dto/add-member.dto';
 import { ProjectsService } from './projects.service';
 import { TasksService } from '../tasks/tasks.service';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('projects')
 export class ProjectsController {
@@ -26,8 +28,15 @@ export class ProjectsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  async createProject(@Body() createProjectDto: CreateProjectDto) {
-    const project = await this.projectService.createProject(createProjectDto);
+  async createProject(
+    @CurrentUser('id') userId: number,
+    @Body() createProjectDto: CreateProjectDto,
+  ) {
+    const project = await this.projectService.createProject({
+      ...createProjectDto,
+      ownerId: userId,
+    });
+
     return {
       id: project.id,
       title: project.title,
@@ -37,48 +46,83 @@ export class ProjectsController {
   }
 
   @Get()
-  async getProjects() {
-    const projects = await this.projectService.getProjects();
-    return { projects };
-  }
-
-  // Moved from /users/:id/projects -> now GET /projects/user/:userId
-  @Get('user/:userId')
-  async getUserProjects(@Param('userId', ParseIntPipe) userId: number) {
-    const projects = await this.projectService.getUserProjects(userId);
+  async getProjects(
+    @CurrentUser('id') userId: number,
+    @CurrentUser('role') userRole: string,
+  ) {
+    const projects = await this.projectService.getProjects(userId, userRole);
     return { projects };
   }
 
   @Get(':id')
-  async getProject(@Param('id', ParseIntPipe) id: number) {
-    const project = await this.projectService.getProject(id);
+  async getProject(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser('id') userId: number,
+    @CurrentUser('role') userRole: string,
+  ) {
+    const project = await this.projectService.getProject(id, userId, userRole);
     return { project };
   }
 
-  @Patch(':id')
+  @Patch(':id/members')
   async addMemberToProject(
     @Param('id', ParseIntPipe) id: number,
+    @CurrentUser('id') callerUserId: number,
+    @CurrentUser('role') userRole: string,
     @Body() addMemberDto: AddMemberDto,
   ) {
-    const updatedProjectMessage = await this.projectService.addMemberToProject(
+    const result = await this.projectService.addMemberToProject(
       id,
       addMemberDto.userId,
+      callerUserId,
+      userRole,
     );
+
     return {
       success: true,
-      data: updatedProjectMessage,
+      message: result,
     };
   }
 
   @Get(':id/members')
-  async getProjectMembers(@Param('id', ParseIntPipe) id: number) {
-    const projectMembers = await this.projectService.getProjectMembers(id);
+  async getProjectMembers(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser('id') userId: number,
+    @CurrentUser('role') userRole: string,
+  ) {
+    const projectMembers = await this.projectService.getProjectMembers(
+      id,
+      userId,
+      userRole,
+    );
     return { projectMembers };
   }
 
   @Get(':id/tasks')
-  async getTasksByProject(@Param('id', ParseIntPipe) id: number) {
-    const tasks = await this.tasksService.getTasksByProject(id);
+  async getTasksByProject(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser('id') userId: number,
+    @CurrentUser('role') userRole: string,
+  ) {
+    const tasks = await this.tasksService.getTasksByProject(
+      id,
+      userId,
+      userRole,
+    );
     return { tasks };
+  }
+
+  @Delete(':id')
+  async deleteProject(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser('id') callerUserId: number,
+    @CurrentUser('role') userRole: string,
+  ) {
+    const result = await this.projectService.deleteProject(
+      id,
+      callerUserId,
+      userRole,
+    );
+    return { message: 'Project deleted successfully', project: result };
   }
 }
