@@ -28,11 +28,7 @@ export class UsersController {
   @HttpCode(HttpStatus.CREATED)
   async createUser(@Body() createUserDto: CreateUserDto) {
     const user = await this.userService.createUser(createUserDto);
-    return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-    };
+    return { id: user.id, name: user.name, email: user.email };
   }
 
   @Get(':id')

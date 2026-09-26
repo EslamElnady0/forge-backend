@@ -1,27 +1,27 @@
 import {
   IsEnum,
   IsInt,
-  IsNotEmpty,
   IsOptional,
   IsPositive,
   IsString,
 } from 'class-validator';
 import { TaskStatus } from '../entities/task.entity';
 
-export class CreateTaskDto {
+export class UpdateTaskDto {
   @IsString()
-  @IsNotEmpty({ message: 'title is required' })
-  title: string;
+  @IsOptional()
+  title?: string;
 
   @IsEnum(TaskStatus, {
     message: 'invalid status, use TODO, IN_PROGRESS, or DONE only',
   })
-  status: TaskStatus;
+  @IsOptional()
+  status?: TaskStatus;
 
   @IsInt()
   @IsPositive()
-  @IsNotEmpty({ message: 'projectId is required' })
-  projectId: number;
+  @IsOptional()
+  projectId?: number;
 
   @IsInt()
   @IsPositive()
