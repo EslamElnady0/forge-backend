@@ -71,7 +71,7 @@ export class TasksRepository {
     id: number,
     userId: number,
     isAdmin: boolean,
-  ): Promise<Task | null> {
+  ): Promise<Task> {
     return this.execute(async () => {
       const raw = await this.prisma.task.findFirst({
         where: {
@@ -80,7 +80,12 @@ export class TasksRepository {
         },
       });
 
-      if (!raw) return null;
+      if (!raw) {
+        throw new NotFoundException(
+          `Task with ID ${id} not found or access denied.`,
+        );
+      }
+
       return new Task(
         raw.id,
         raw.title,
@@ -88,6 +93,62 @@ export class TasksRepository {
         raw.projectId,
         raw.assigneeId,
       );
+    });
+  }
+
+  async updateScoped(
+    id: number,
+    dto: UpdateTaskDto,
+    userId: number,
+    isAdmin: boolean,
+  ): Promise<Task> {
+    return this.execute(async () => {
+      const result = await this.prisma.task.updateMany({
+        where: {
+          id,
+          ...this.getAccessFilter(userId, isAdmin),
+        },
+        data: dto,
+      });
+
+      if (result.count === 0) {
+        throw new NotFoundException(
+          `Task with ID ${id} not found or access denied.`,
+        );
+      }
+
+      const raw = await this.prisma.task.findUniqueOrThrow({
+        where: { id },
+      });
+
+      return new Task(
+        raw.id,
+        raw.title,
+        raw.status as TaskStatus,
+        raw.projectId,
+        raw.assigneeId,
+      );
+    });
+  }
+
+  async deleteScoped(
+    id: number,
+    userId: number,
+    isAdmin: boolean,
+  ): Promise<void> {
+    return this.execute(async () => {
+      const result = await this.prisma.task.deleteMany({
+        where: {
+          id,
+          ...this.getAccessFilter(userId, isAdmin),
+        },
+      });
+
+      if (result.count === 0) {
+        throw new NotFoundException(
+          `Task with ID ${id} not found or access denied.`,
+        );
+      }
     });
   }
 
@@ -162,42 +223,6 @@ export class TasksRepository {
     });
   }
 
-  async updateScoped(
-    id: number,
-    dto: UpdateTaskDto,
-    userId: number,
-    isAdmin: boolean,
-  ): Promise<boolean> {
-    return this.execute(async () => {
-      const result = await this.prisma.task.updateMany({
-        where: {
-          id,
-          ...this.getAccessFilter(userId, isAdmin),
-        },
-        data: dto,
-      });
-
-      return result.count > 0;
-    });
-  }
-
-  async deleteScoped(
-    id: number,
-    userId: number,
-    isAdmin: boolean,
-  ): Promise<boolean> {
-    return this.execute(async () => {
-      const result = await this.prisma.task.deleteMany({
-        where: {
-          id,
-          ...this.getAccessFilter(userId, isAdmin),
-        },
-      });
-
-      return result.count > 0;
-    });
-  }
-
   private async execute<T>(action: () => Promise<T>): Promise<T> {
     try {
       return await action();
@@ -206,15 +231,13 @@ export class TasksRepository {
         error instanceof Prisma.PrismaClientInitializationError ||
         error instanceof Prisma.PrismaClientRustPanicError
       ) {
-        throw new ServiceUnavailableException(
-          'Database service is currently unreachable.',
-        );
+        throw new ServiceUnavailableException('Database service unreachable.');
       }
 
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         if (error.code === 'P2003') {
           throw new NotFoundException(
-            'Referenced Project or Assignee does not exist.',
+            'Referenced project or assignee does not exist.',
           );
         }
       }

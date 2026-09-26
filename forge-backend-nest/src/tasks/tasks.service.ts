@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { TasksRepository } from './tasks.repository';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -7,24 +7,20 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 export class TasksService {
   constructor(private readonly taskRepository: TasksRepository) {}
 
+  private isAdmin(role: string): boolean {
+    return role === 'ADMIN';
+  }
+
   async createTask(dto: CreateTaskDto, userId: number, userRole: string) {
     return this.taskRepository.save(dto, userId, this.isAdmin(userRole));
   }
 
   async getTask(id: number, userId: number, userRole: string) {
-    const task = await this.taskRepository.findByIdScoped(
+    return this.taskRepository.findByIdScoped(
       id,
       userId,
       this.isAdmin(userRole),
     );
-
-    if (!task) {
-      throw new NotFoundException(
-        `Task with ID ${id} not found or access denied.`,
-      );
-    }
-
-    return task;
   }
 
   async getTasks(userId: number, userRole: string) {
@@ -57,43 +53,16 @@ export class TasksService {
     userId: number,
     userRole: string,
   ) {
-    const updated = await this.taskRepository.updateScoped(
+    return this.taskRepository.updateScoped(
       id,
       dto,
-      userId,
-      this.isAdmin(userRole),
-    );
-
-    if (!updated) {
-      throw new NotFoundException(
-        `Task with ID ${id} not found or access denied.`,
-      );
-    }
-
-    return this.taskRepository.findByIdScoped(
-      id,
       userId,
       this.isAdmin(userRole),
     );
   }
 
   async deleteTask(id: number, userId: number, userRole: string) {
-    const deleted = await this.taskRepository.deleteScoped(
-      id,
-      userId,
-      this.isAdmin(userRole),
-    );
-
-    if (!deleted) {
-      throw new NotFoundException(
-        `Task with ID ${id} not found or access denied.`,
-      );
-    }
-
+    await this.taskRepository.deleteScoped(id, userId, this.isAdmin(userRole));
     return { id };
-  }
-
-  isAdmin(userRole: string): boolean {
-    return userRole === 'ADMIN';
   }
 }
