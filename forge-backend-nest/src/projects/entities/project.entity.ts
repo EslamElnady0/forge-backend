@@ -4,6 +4,7 @@ export class Project {
     public title: string,
     public description: string | null,
     public ownerId: number,
+    public members?: ProjectMember[],
   ) {}
 }
 

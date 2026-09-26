@@ -62,9 +62,18 @@ export class ProjectsRepository {
 
   async findById(id: number): Promise<Project> {
     const raw = await this.execute(() =>
-      this.prisma.project.findUniqueOrThrow({ where: { id } }),
+      this.prisma.project.findUniqueOrThrow({
+        where: { id },
+        include: { members: true },
+      }),
     );
-    return new Project(raw.id, raw.title, raw.description, raw.ownerId);
+    return new Project(
+      raw.id,
+      raw.title,
+      raw.description,
+      raw.ownerId,
+      raw.members,
+    );
   }
 
   async fetchProjects(): Promise<Project[]> {
