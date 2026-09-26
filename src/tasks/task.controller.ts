@@ -82,9 +82,9 @@ export class TaskController {
     next: NextFunction,
   ) => {
     try {
-      const { assigneeId } = req.params;
+      const { id } = req.params;
 
-      const tasks = await this.taskService.getTasksByAssignee(assigneeId);
+      const tasks = await this.taskService.getTasksByAssignee(id);
       return res.status(200).json({ tasks });
     } catch (error) {
       next(error);

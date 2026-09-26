@@ -27,7 +27,7 @@ export const ProjectIdParamSchema = z.object({
 
 export const AssigneeIdParamSchema = z.object({
   params: z.object({
-    assigneeId: z.coerce.number().int().nonnegative(),
+    id: z.coerce.number().int().nonnegative(),
   }),
 });
 

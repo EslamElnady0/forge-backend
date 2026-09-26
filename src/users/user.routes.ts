@@ -18,7 +18,7 @@ userRouter.get("/:id", validate(UserIdParamSchema), userController.getUser);
 
 // Nested resource: tasks assigned to a specific user
 userRouter.get(
-  "/:assigneeId/tasks",
+  "/:id/tasks",
   validate(AssigneeIdParamSchema),
   taskController.getTasksByAssignee,
 );
